@@ -34,8 +34,9 @@ module.exports = {
               .json({ message: 'Password is incorrect' });
           }
           const token = jwt.sign({ data: user }, dbConfig.secret, {
-            expiresIn: 10000
+            expiresIn: '6h'
           });
+          // cookie for browser
           res.cookie('auth', token);
           return res
             .status(HttpStatus.OK)
@@ -53,7 +54,8 @@ module.exports = {
     console.log(req.body);
     const schema = Joi.object().keys({
       username: Joi.string().required(),
-      password: Joi.string().required()
+      password: Joi.string().required(),
+      admin: Joi.boolean()
       //TODO: o diaxeiristis toy systimatos kanei thn eggrafi neou servitorou
       //      opote ta pedia pros symplirosi pou tha xreiastoun einai:
       //      { [username, password, onoma, eponimo, tilefwno] }
@@ -81,13 +83,15 @@ module.exports = {
       }
       const body = {
         username: Helpers.lowerCase(value.username),
-        password: hash
+        password: hash,
+        admin: value.admin
       };
       User.create(body)
         .then(user => {
           const token = jwt.sign({ data: user }, dbConfig.secret, {
             expiresIn: '6h'
           });
+          // cookie for browser
           res.cookie('auth', token);
           res
             .status(HttpStatus.CREATED)

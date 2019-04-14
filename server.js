@@ -37,10 +37,14 @@ mongoose.Promise = global.Promise;
 mongoose.connect(dbConfig.url, { useNewUrlParser: true });
 
 const auth = require('./routes/authRoutes');
-const tables = require('./routes/tableRoutes');
+const table = require('./routes/tableRoutes');
+const order = require('./routes/orderRoutes');
+const product = require('./routes/productRoutes');
 
 app.use('/api/iorder', auth);
-app.use('/api/iorder', tables);
+app.use('/api/iorder', table);
+app.use('/api/iorder', order);
+app.use('/api/iorder', product);
 
 app.listen(3000, () => {
   console.log('Running on port 3000');

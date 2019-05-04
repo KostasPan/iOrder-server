@@ -40,11 +40,13 @@ const auth = require('./routes/authRoutes');
 const table = require('./routes/tableRoutes');
 const order = require('./routes/orderRoutes');
 const product = require('./routes/productRoutes');
+const total = require('./routes/totalRoutes');
 
 app.use('/api/iorder', auth);
 app.use('/api/iorder', table);
 app.use('/api/iorder', order);
 app.use('/api/iorder', product);
+app.use('/api/iorder', total);
 
 app.listen(3000, () => {
   console.log('Running on port 3000');

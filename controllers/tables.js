@@ -1,12 +1,11 @@
 const Joi = require('joi');
 const HttpStatus = require('http-status-codes');
 
+const Helpers = require('../helpers/helpers');
 const Table = require('../models/tableModels');
 
 module.exports = {
-  addTable(req, res) {
-    console.log(req.body);
-
+  async addTable(req, res) {
     const schema = Joi.object().keys({
       positionName: Joi.string().required(),
       tablesNumber: Joi.number()
@@ -20,25 +19,28 @@ module.exports = {
       return res.status(HttpStatus.BAD_REQUEST).json({ msg: error.details });
     }
 
-    // mallon axreiasto:
-    // isws na min xreiastei na apothikeyw sti basi ta trapezia
-    // (an den ginetai diagrafi trapeziou ws monada)
-    // arkei na kserw position kai sunolo
+    const table = await Table.findOne({
+      position_table_name: Helpers.lowerCase(req.body.positionName)
+    });
+    if (table) {
+      return res
+        .status(HttpStatus.CONFLICT)
+        .json({ message: 'Position name already exists' });
+    }
+
     tablesArray = new Array();
     for (let i = 1; i <= req.body.tablesNumber; i++) {
-      tablesArray.push({ id: i, name: req.body.positionName.slice(0, 4) + i });
+      tablesArray.push({
+        id: i,
+        name: Helpers.lowerCase(req.body.positionName.slice(0, 4)) + i
+      });
     }
-    console.log(tablesArray);
 
     const body = {
-      position_table: req.body.positionName.slice(0, 4),
+      position_table: Helpers.lowerCase(req.body.positionName.slice(0, 4)),
       position_table_name: req.body.positionName,
       length_tables: req.body.tablesNumber,
       tables: tablesArray
-      // position_table: String,
-      // position_table_name: { type: String, default: '' },
-      // length_tables: { type: Number, default: 0 },
-      // tables: [{ id: { type: Number, min: 0 }, name: { type: String } }]
     };
 
     Table.create(body)
@@ -48,6 +50,33 @@ module.exports = {
           .json({ message: 'Table position created', tablesPosition });
       })
       .catch(err => {
+        res
+          .status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .json({ message: 'Error occured' });
+      });
+  },
+
+  deletePositionTable(req, res) {
+    const schema = Joi.object().keys({
+      positionId: Joi.string().required()
+    });
+    const { error, value } = Joi.validate(req.body, schema);
+    if (error && error.details) {
+      return res.status(HttpStatus.BAD_REQUEST).json({ msg: error.details });
+    }
+
+    if (req.user.admin === false)
+      return res
+        .status(HttpStatus.UNAUTHORIZED)
+        .json({ message: 'You have to be admin to delete a position table.' });
+
+    Table.deleteOne({ _id: req.body.positionId })
+      .then(table => {
+        res
+          .status(HttpStatus.OK)
+          .json({ message: 'Delete position table', table });
+      })
+      .catch(() => {
         res
           .status(HttpStatus.INTERNAL_SERVER_ERROR)
           .json({ message: 'Error occured' });

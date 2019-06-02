@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 const User = require('../models/userModels');
+const Total = require('../models/totalModels');
 const Helpers = require('../helpers/helpers');
 const dbConfig = require('../config/secret');
 
@@ -34,7 +35,7 @@ module.exports = {
               .json({ message: 'Password is incorrect' });
           }
           const token = jwt.sign({ data: user }, dbConfig.secret, {
-            expiresIn: '6h'
+            expiresIn: '8h'
           });
           // cookie for browser
           res.cookie('auth', token);
@@ -81,6 +82,28 @@ module.exports = {
           .status(HttpStatus.BAD_REQUEST)
           .json({ message: 'Error hashing password' });
       }
+
+      // TODO: kata tin dimiourgia xristi na dimiourgei pedio totals!
+      // Promise.all([
+      //   User.create({
+      //     username: Helpers.lowerCase(value.username),
+      //     password: hash,
+      //     admin: value.admin
+      //   }),
+      //   Total.create({
+      //     username: value.username,
+      //     userId:
+      //   })
+      // ]).then(([user, total]) => {
+      //   res
+      //     .status(HttpStatus.CREATED)
+      //     .json({ message: 'User created, Total created successfully', user, total })}
+      // ).catch(err => {
+      //   res
+      //     .status(HttpStatus.INTERNAL_SERVER_ERROR)
+      //     .json({ message: 'Error occured', err });
+      // });
+
       const body = {
         username: Helpers.lowerCase(value.username),
         password: hash,
@@ -88,14 +111,33 @@ module.exports = {
       };
       User.create(body)
         .then(user => {
-          const token = jwt.sign({ data: user }, dbConfig.secret, {
-            expiresIn: '6h'
+          // const token = jwt.sign({ data: user }, dbConfig.secret, {
+          //   expiresIn: '6h'
+          // });
+          // // cookie for browser
+          // res.cookie('auth', token);
+
+          // Total.create({
+          //   username: value.username,
+          //   userId: user._id
+          // })
+          //   .then(total => {
+          //     res.status(HttpStatus.CREATED).json({
+          //       message: 'User created - Total created successfully',
+          //       user,
+          //       total
+          //     });
+          //   })
+          //   .catch(err => {
+          //     res
+          //       .status(HttpStatus.INTERNAL_SERVER_ERROR)
+          //       .json({ message: 'Error occured', err });
+          //   });
+
+          res.status(HttpStatus.CREATED).json({
+            message: 'User created successfully',
+            user
           });
-          // cookie for browser
-          res.cookie('auth', token);
-          res
-            .status(HttpStatus.CREATED)
-            .json({ message: 'User created successfully', user, token });
         })
         .catch(err => {
           res

@@ -4,7 +4,8 @@ const totalSchema = mongoose.Schema([
   {
     username: { type: String, default: '' },
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    total: { type: Number, default: 0 }
+    total: { type: Number, default: 0 },
+    ordersToGo: { type: Number, default: 0 }
   }
 ]);
 

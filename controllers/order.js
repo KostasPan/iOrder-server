@@ -2,17 +2,37 @@ const Joi = require('joi');
 const HttpStatus = require('http-status-codes');
 
 const Order = require('../models/orderModels');
+const User = require('../models/userModels');
+const Table = require('../models/tableModels');
 
 module.exports = {
   async getOrder(req, res) {
     try {
-      const body = {};
-      if (!req.user.admin) {
-        body.userId = req.user._id;
+      // check if table busy from another user if not an admin
+      const table = await Table.findOne(
+        {
+          'tables._id': req.body.tableId
+        },
+        { 'tables.$': 1, _id: 0 }
+      ).then(table => {
+        return table;
+      });
+
+      // if (!req.user.admin) {
+      if (table.tables[0].busy) {
+        if (table.tables[0].user !== req.user.username) {
+          return res.status(HttpStatus.UNAUTHORIZED).json({
+            message: 'Anauthorized to get table orders',
+            auth: null
+          });
+        }
       }
-      body.tableId = req.body.tableId;
-      console.log(body);
-      const order = await Order.find(body);
+      // }
+
+      const order = await Order.find({
+        userId: req.user._id,
+        tableId: req.body.tableId
+      });
       return res.status(HttpStatus.OK).json({ message: 'Order', order });
     } catch (err) {
       return res
@@ -57,16 +77,50 @@ module.exports = {
       p.tableId = req.body.tableId;
     });
 
-    const body = req.body.products;
-
-    Order.create(body)
+    // find an order with the above body [user, table]
+    Order.findOne({
+      username: req.user.username,
+      userId: req.user._id,
+      tableId: req.body.tableId
+    })
       .then(order => {
-        res.status(HttpStatus.OK).json({ message: 'Order created', order });
+        let promises = [];
+        promises.push(Order.create(req.body.products));
+        if (!order) {
+          // order dont exist, init user & table
+          promises.push(
+            User.updateOne(
+              { username: req.user.username, _id: req.user._id },
+              {
+                $inc: { ordersToGo: 1 }
+              }
+              // { upsert: true, new: true }
+            )
+          );
+          promises.push(
+            Table.updateOne(
+              { 'tables._id': req.body.tableId },
+              {
+                $set: {
+                  'tables.$.busy': true,
+                  'tables.$.user': req.user.username
+                }
+              }
+            )
+          );
+        }
+        Promise.all(promises)
+          .then(([order, total, table]) => {
+            res
+              .status(HttpStatus.OK)
+              .json({ message: 'Order created', order, total, table });
+          })
+          .catch(err => {
+            res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: err });
+          });
       })
       .catch(err => {
-        res
-          .status(HttpStatus.INTERNAL_SERVER_ERROR)
-          .json({ message: 'Error occured' }, { error: err });
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: err });
       });
   }
 };

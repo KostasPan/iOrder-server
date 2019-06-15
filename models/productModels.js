@@ -4,11 +4,11 @@ const mongoose = require('mongoose');
 const productSchema = mongoose.Schema({
   category: { type: String, default: '' },
   name: { type: String, default: '' },
-  shortName: { type: String, default: '' },
-  price: { type: Number, default: '' },
-  priceTag: { type: String, default: '' },
-  station: { type: String, default: '' },
-  details: { type: Array, default: [] }
+  price: { type: Number, default: 0 },
+  priceTag: { type: String, default: 'eu' },
+  station: { type: String, default: '0.0.0.0' },
+  details: { type: Array, default: [] },
+  detailsoptional: { type: Array, default: [] }
 });
 
 module.exports = mongoose.model('Product', productSchema);

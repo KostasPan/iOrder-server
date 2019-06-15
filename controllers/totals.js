@@ -13,11 +13,11 @@ module.exports = {
           .status(HttpStatus.UNAUTHORIZED)
           .json({ message: 'You have to be admin to get totals.' });
 
-      // find those who has total or just unpaid orders without total
+      // find those who has total or just unpaid orders without total [online]
       const totals = await User.find(
         { $or: [{ total: { $gt: 0 } }, { total: 0, ordersToGo: { $gt: 0 } }] },
         { total: 1, ordersToGo: 1, username: 1 }
-      );
+      ).sort({ total: -1, ordersToGo: -1 });
       return res.status(HttpStatus.OK).json({ message: 'Totals', totals });
     } catch (err) {
       return res

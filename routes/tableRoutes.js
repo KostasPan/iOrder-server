@@ -11,5 +11,10 @@ router.post(
   authHelper.VerifyToken,
   TableCtrl.deletePositionTable
 );
+router.post(
+  '/table/edit-tables',
+  authHelper.VerifyToken,
+  TableCtrl.editPositionTable
+);
 
 module.exports = router;

@@ -31,14 +31,14 @@ module.exports = {
     tablesArray = new Array();
     for (let i = 1; i <= req.body.tablesNumber; i++) {
       tablesArray.push({
-        id: i,
-        name: Helpers.lowerCase(req.body.positionName.slice(0, 4)) + i
+        id: i
+        // name: Helpers.lowerCase(req.body.positionName.slice(0, 4)) + i
       });
     }
 
     const body = {
       position_table: Helpers.lowerCase(req.body.positionName.slice(0, 4)),
-      position_table_name: req.body.positionName,
+      position_table_name: Helpers.lowerCase(req.body.positionName),
       length_tables: req.body.tablesNumber,
       tables: tablesArray
     };
@@ -80,6 +80,51 @@ module.exports = {
         res
           .status(HttpStatus.INTERNAL_SERVER_ERROR)
           .json({ message: 'Error occured' });
+      });
+  },
+
+  async editPositionTable(req, res) {
+    const schema = Joi.object().keys({
+      tableId: Joi.string().required(),
+      position_table: Joi.string().required(),
+      position_table_name: Joi.string().required()
+    });
+    const { error, value } = Joi.validate(req.body, schema);
+    if (error && error.details) {
+      return res.status(HttpStatus.BAD_REQUEST).json({ msg: error.details });
+    }
+
+    if (req.user.admin === false)
+      return res
+        .status(HttpStatus.UNAUTHORIZED)
+        .json({ message: 'You have to be admin to edit tables.' });
+
+    const table = await Table.findOne({
+      position_table_name: Helpers.lowerCase(req.body.position_table_name),
+      position_table: Helpers.lowerCase(req.body.position_table)
+    });
+    if (table) {
+      console.log(table);
+      return res
+        .status(HttpStatus.CONFLICT)
+        .json({ message: 'Position name already exists' });
+    }
+
+    const body = {
+      position_table: Helpers.lowerCase(req.body.position_table),
+      position_table_name: Helpers.lowerCase(req.body.position_table_name)
+    };
+    Table.updateOne({ _id: req.body.tableId }, { $set: body })
+      .then(tables => {
+        res.status(HttpStatus.CREATED).json({
+          message: 'Tables customized successfully',
+          tables
+        });
+      })
+      .catch(err => {
+        res
+          .status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .json({ message: 'Error occured', err });
       });
   },
 

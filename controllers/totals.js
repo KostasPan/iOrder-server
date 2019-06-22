@@ -88,36 +88,39 @@ module.exports = {
       .catch(err => {
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: err });
       });
+  },
 
-    // // update Total
-    // Total.updateOne(
-    //   { username: req.user.username, userId: req.user._id },
-    //   { $inc: { total: req.body.total } },
-    //   { upsert: true }
-    // )
-    //   .then(total => {
-    //     // remove Order
-    //     Order.remove({
-    //       tableId: req.body.tableId,
-    //       userId: req.user._id
-    //     })
-    //       .then(order => {
-    //         res.status(HttpStatus.OK).json({
-    //           message: 'Total placed and order removed',
-    //           total,
-    //           order
-    //         });
-    //       })
-    //       .catch(err => {
-    //         res
-    //           .status(HttpStatus.INTERNAL_SERVER_ERROR)
-    //           .json({ message: 'Error order remove' }, { error: err });
-    //       });
-    //   })
-    //   .catch(err => {
-    //     res
-    //       .status(HttpStatus.INTERNAL_SERVER_ERROR)
-    //       .json({ message: 'Error total' }, { error: err });
-    //   });
+  setPartlyTotal(req, res) {
+    const schema = Joi.object().keys({
+      p_ids: Joi.array()
+        .items(Joi.string().required())
+        .required(),
+      total: Joi.number().required()
+    });
+    const { error, value } = Joi.validate(req.body, schema);
+    if (error && error.details) {
+      return res.status(HttpStatus.BAD_REQUEST).json({ msg: error.details });
+    }
+
+    Promise.all([
+      User.updateOne(
+        { username: req.user.username, _id: req.user._id },
+        { $inc: { total: req.body.total } }
+      ),
+      Order.deleteMany({
+        _id: { $in: req.body.p_ids },
+        userId: req.user._id
+      })
+    ])
+      .then(([total, order]) => {
+        res.status(HttpStatus.OK).json({
+          message: 'Partly total placed and several orders removed',
+          total,
+          order
+        });
+      })
+      .catch(err => {
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: err });
+      });
   }
 };

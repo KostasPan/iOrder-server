@@ -7,5 +7,10 @@ const authHelper = require('../helpers/authHelper');
 router.get('/total/get-total', authHelper.VerifyToken, TotalCtrl.getTotal);
 router.post('/total/set-total', authHelper.VerifyToken, TotalCtrl.setTotal);
 router.post('/total/init-total', authHelper.VerifyToken, TotalCtrl.initTotal);
+router.post(
+  '/total/set-partly-total',
+  authHelper.VerifyToken,
+  TotalCtrl.setPartlyTotal
+);
 
 module.exports = router;

@@ -42,7 +42,6 @@ module.exports = {
   },
 
   setOrder(req, res) {
-    console.log('setOrder');
     const schema = Joi.object().keys({
       products: Joi.array().items(
         Joi.object({
@@ -118,6 +117,121 @@ module.exports = {
           .catch(err => {
             res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: err });
           });
+      })
+      .catch(err => {
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: err });
+      });
+  },
+
+  async moveOrder(req, res) {
+    const schema = Joi.object().keys({
+      fromtableid: Joi.string().required(),
+      totableid: Joi.string().required(),
+      selectedorders: Joi.array()
+        .items(Joi.string().required())
+        .required(),
+      moveall: Joi.boolean().required()
+    });
+    const { error, value } = Joi.validate(req.body, schema);
+    if (error && error.details) {
+      return res.status(HttpStatus.BAD_REQUEST).json({ msg: error.details });
+    }
+
+    // find toTable, fromTable data
+    let promises = [];
+    promises.push(
+      Table.findOne(
+        {
+          'tables._id': req.body.fromtableid
+        },
+        { 'tables.$': 1, _id: 0 }
+      )
+    );
+    promises.push(
+      Table.findOne(
+        {
+          'tables._id': req.body.totableid
+        },
+        { 'tables.$': 1, _id: 0 }
+      )
+    );
+    const tables = await Promise.all(promises)
+      .then(([fromtable, totable]) => {
+        if (!fromtable || !totable) {
+          res
+            .status(HttpStatus.CONFLICT)
+            .json({ message: 'Tables do not exist' });
+        } else {
+          return { fromtable: fromtable.tables[0], totable: totable.tables[0] };
+        }
+      })
+      .catch(err => {
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: err });
+      });
+
+    // toTable is busy from another user
+    if (
+      tables.totable.busy === true &&
+      tables.totable.user !== req.user.username
+    ) {
+      return res
+        .status(HttpStatus.NOT_ACCEPTABLE)
+        .json({ message: "You cannot move orders on other users' table" });
+    }
+
+    promises = [];
+    if (tables.totable.busy === false) {
+      promises.push(
+        Table.updateOne(
+          { 'tables._id': req.body.totableid },
+          {
+            $set: { 'tables.$.busy': true, 'tables.$.user': req.user.username }
+          }
+        )
+      );
+    }
+    if (req.body.moveall === true) {
+      promises.push(
+        Table.updateOne(
+          { 'tables._id': req.body.fromtableid },
+          { $set: { 'tables.$.busy': false, 'tables.$.user': '' } }
+        )
+      );
+    }
+    if (tables.totable.busy === true && req.body.moveall === true) {
+      promises.push(
+        User.updateOne(
+          { username: req.user.username, _id: req.user._id },
+          {
+            $inc: { ordersToGo: -1 }
+          }
+        )
+      );
+    } else if (tables.totable.busy === false && req.body.moveall === false) {
+      promises.push(
+        User.updateOne(
+          { username: req.user.username, _id: req.user._id },
+          {
+            $inc: { ordersToGo: 1 }
+          }
+        )
+      );
+    }
+
+    promises.push(
+      Order.updateMany(
+        {
+          _id: { $in: req.body.selectedorders }
+        },
+        {
+          $set: { tableId: req.body.totableid }
+        }
+      )
+    );
+
+    await Promise.all(promises)
+      .then(() => {
+        res.status(HttpStatus.OK).json({ message: 'Order moved' });
       })
       .catch(err => {
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: err });

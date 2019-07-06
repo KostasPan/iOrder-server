@@ -9,7 +9,15 @@ const tableSchema = mongoose.Schema({
       id: { type: Number, min: 0 },
       name: { type: String },
       busy: { type: Boolean, default: false },
-      user: { type: String, default: '' }
+      user: { type: String, default: '' },
+      discount: {
+        isDiscountActive: { type: Boolean, default: false },
+        discountedtotal: { type: Number, default: 0 },
+        total: { type: Number, default: 0 },
+        discount: { type: Number, default: 0 },
+        type: { type: String, default: '' },
+        discountStr: { type: String, default: '' }
+      }
     }
   ]
 });

@@ -3,6 +3,7 @@ const HttpStatus = require('http-status-codes');
 
 const Helpers = require('../helpers/helpers');
 const Table = require('../models/tableModels');
+const User = require('../models/userModels');
 
 module.exports = {
   async addTable(req, res) {
@@ -129,12 +130,52 @@ module.exports = {
   },
 
   async getAllTables(req, res) {
+    let promises = [];
+    promises.push(Table.find({}));
+    promises.push(
+      User.aggregate([
+        {
+          $group: {
+            _id: null,
+            total: {
+              $sum: '$ordersToGo'
+            }
+          }
+        }
+      ])
+    );
+    await Promise.all(promises)
+      .then(([allTables, numOfBusyTables]) => {
+        res
+          .status(HttpStatus.OK)
+          .json({ message: 'Tables', allTables, numOfBusyTables });
+      })
+      .catch(err => {
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: err });
+      });
+  },
+
+  async getBusyTablesOrderTimeSorted(req, res) {
     try {
-      const allTables = await Table.find({});
+      const busyTables = await Table.aggregate([
+        { $project: { _id: 0, length_tables: 0 } },
+        { $unwind: '$tables' },
+        {
+          $match: {
+            'tables.busy': true
+          }
+        },
+        {
+          $sort: {
+            'tables.orderTime': 1
+          }
+        },
+        { $limit: 10 }
+      ]);
 
       return res
         .status(HttpStatus.OK)
-        .json({ message: 'All tables', allTables });
+        .json({ message: 'Busy tables', busyTables });
     } catch (err) {
       return res
         .status(HttpStatus.INTERNAL_SERVER_ERROR)

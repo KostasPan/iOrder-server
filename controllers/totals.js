@@ -74,7 +74,13 @@ module.exports = {
       }),
       Table.updateOne(
         { 'tables._id': req.body.tableId },
-        { $set: { 'tables.$.busy': false, 'tables.$.user': '' } }
+        {
+          $set: {
+            'tables.$.busy': false,
+            'tables.$.user': '',
+            'tables.$.orderTime': null
+          }
+        }
       )
     ])
       .then(([total, order, table]) => {

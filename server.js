@@ -9,6 +9,7 @@ const app = express();
 app.use(cors());
 
 const dbConfig = require('./config/secret');
+const printer = require('./printer/printer');
 
 // app.use((req, res, next) => {
 //   res.header('Access-Control-Allow-Origin', req.headers.origin);

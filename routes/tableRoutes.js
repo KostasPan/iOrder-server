@@ -16,5 +16,10 @@ router.post(
   authHelper.VerifyToken,
   TableCtrl.editPositionTable
 );
+router.get(
+  '/table/get-busy-tables',
+  authHelper.VerifyToken,
+  TableCtrl.getBusyTablesOrderTimeSorted
+);
 
 module.exports = router;

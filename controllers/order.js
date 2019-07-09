@@ -102,7 +102,8 @@ module.exports = {
               {
                 $set: {
                   'tables.$.busy': true,
-                  'tables.$.user': req.user.username
+                  'tables.$.user': req.user.username,
+                  'tables.$.orderTime': new Date()
                 }
               }
             )
@@ -185,7 +186,11 @@ module.exports = {
         Table.updateOne(
           { 'tables._id': req.body.totableid },
           {
-            $set: { 'tables.$.busy': true, 'tables.$.user': req.user.username }
+            $set: {
+              'tables.$.busy': true,
+              'tables.$.user': req.user.username,
+              'tables.$.orderTime': tables.fromtable.orderTime
+            }
           }
         )
       );
@@ -194,7 +199,13 @@ module.exports = {
       promises.push(
         Table.updateOne(
           { 'tables._id': req.body.fromtableid },
-          { $set: { 'tables.$.busy': false, 'tables.$.user': '' } }
+          {
+            $set: {
+              'tables.$.busy': false,
+              'tables.$.user': '',
+              'tables.$.orderTime': null
+            }
+          }
         )
       );
     }

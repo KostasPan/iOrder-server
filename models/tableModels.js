@@ -10,6 +10,7 @@ const tableSchema = mongoose.Schema({
       name: { type: String },
       busy: { type: Boolean, default: false },
       user: { type: String, default: '' },
+      orderTime: { type: Date },
       discount: {
         isDiscountActive: { type: Boolean, default: false },
         discountedtotal: { type: Number, default: 0 },

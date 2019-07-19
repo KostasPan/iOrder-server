@@ -55,4 +55,17 @@ app.use('/api/iorder', discount);
 
 app.listen(3000, () => {
   console.log('Running on port 3000');
+  // printer
+  //   .initPrinter()
+  //   .then(console.log('Printer ready'))
+  //   .catch(err => {
+  //     console.log('Printer error:', err);
+  //   });
+
+  // printer
+  //   .printOrder('', 'ΠΛΑΤ3', 'kostas pan | Πανόπουλος', '22:19:55')
+  //   .then(console.log('Printer ready'))
+  //   .catch(err => {
+  //     console.log('Printer error:', err);
+  //   });
 });

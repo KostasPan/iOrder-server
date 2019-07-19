@@ -1,9 +1,13 @@
 const Joi = require('joi');
 const HttpStatus = require('http-status-codes');
+const Helper = require('../helpers/helpers');
 
 const Order = require('../models/orderModels');
 const User = require('../models/userModels');
 const Table = require('../models/tableModels');
+
+const printer = require('../printer/printer');
+// const testprinter = require('../printer/testprinter');
 
 module.exports = {
   async getOrder(req, res) {
@@ -41,7 +45,7 @@ module.exports = {
     }
   },
 
-  setOrder(req, res) {
+  async setOrder(req, res) {
     const schema = Joi.object().keys({
       products: Joi.array().items(
         Joi.object({
@@ -63,7 +67,9 @@ module.exports = {
           comment: Joi.string().allow('')
         })
       ),
-      tableId: Joi.string().required()
+      tableId: Joi.string().required(),
+      table: Joi.string().required(),
+      time: Joi.string().required()
     });
     const { error, value } = Joi.validate(req.body, schema);
     if (error && error.details) {
@@ -122,6 +128,14 @@ module.exports = {
       .catch(err => {
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: err });
       });
+
+    printer.pushElementPrinterStack({
+      order: req.body.products,
+      table: req.body.table,
+      username: req.user.username,
+      time: req.body.time,
+      type: 'order'
+    });
   },
 
   async moveOrder(req, res) {
@@ -247,5 +261,23 @@ module.exports = {
       .catch(err => {
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: err });
       });
+  },
+
+  printComment(req, res) {
+    const schema = Joi.object().keys({
+      comment: Joi.string().required(),
+      time: Joi.string().required()
+    });
+    const { error, value } = Joi.validate(req.body, schema);
+    if (error && error.details) {
+      return res.status(HttpStatus.BAD_REQUEST).json({ msg: error.details });
+    }
+    printer.pushElementPrinterStack({
+      comment: req.body.comment,
+      username: req.user.username,
+      time: req.body.time,
+      type: 'comment'
+    });
+    return res.status(HttpStatus.OK).json({ message: 'Comment printed' });
   }
 };

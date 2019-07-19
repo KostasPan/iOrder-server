@@ -6,5 +6,13 @@ module.exports = {
 
   lowerCase: str => {
     return str.toLowerCase();
+  },
+
+  upperCase: str => {
+    return str.toUpperCase();
+  },
+
+  normalizeGreek: text => {
+    return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   }
 };

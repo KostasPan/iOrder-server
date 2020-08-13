@@ -1,0 +1,2 @@
+cd location\to\app\iOrder-server
+start nodemon server.js

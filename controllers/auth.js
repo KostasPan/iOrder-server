@@ -18,32 +18,34 @@ module.exports = {
     }
 
     await User.findOne({
-      username: Helpers.lowerCase(req.body.username)
+      username: Helpers.lowerCase(req.body.username),
     })
-      .then(user => {
+      .then((user) => {
         if (!user) {
           return res
             .status(HttpStatus.NOT_FOUND)
             .json({ message: 'Username not found' });
         }
 
-        return bcrypt.compare(req.body.password, user.password).then(result => {
-          if (!result) {
+        return bcrypt
+          .compare(req.body.password, user.password)
+          .then((result) => {
+            if (!result) {
+              return res
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .json({ message: 'Password is incorrect' });
+            }
+            const token = jwt.sign({ data: user }, dbConfig.secret, {
+              expiresIn: '8h',
+            });
+            // cookie for browser
+            res.cookie('auth', token);
             return res
-              .status(HttpStatus.INTERNAL_SERVER_ERROR)
-              .json({ message: 'Password is incorrect' });
-          }
-          const token = jwt.sign({ data: user }, dbConfig.secret, {
-            expiresIn: '8h'
+              .status(HttpStatus.OK)
+              .json({ message: 'Login successful', user, token });
           });
-          // cookie for browser
-          res.cookie('auth', token);
-          return res
-            .status(HttpStatus.OK)
-            .json({ message: 'Login successful', user, token });
-        });
       })
-      .catch(err => {
+      .catch((err) => {
         return res
           .status(HttpStatus.INTERNAL_SERVER_ERROR)
           .json({ message: 'Error occured' });
@@ -55,16 +57,16 @@ module.exports = {
     const schema = Joi.object().keys({
       username: Joi.string().required(),
       password: Joi.string().required(),
-      admin: Joi.boolean()
+      admin: Joi.boolean(),
     });
 
-    const { error, value } = Joi.validate(req.body, schema);
+    const { error, value } = schema.validate(req.body);
     if (error && error.details) {
       return res.status(HttpStatus.BAD_REQUEST).json({ msg: error.details });
     }
 
     const uname = await User.findOne({
-      username: Helpers.lowerCase(req.body.username)
+      username: Helpers.lowerCase(req.body.username),
     });
     if (uname) {
       return res
@@ -82,20 +84,20 @@ module.exports = {
       const body = {
         username: Helpers.lowerCase(value.username),
         password: hash,
-        admin: value.admin
+        admin: value.admin,
       };
       User.create(body)
-        .then(user => {
+        .then((user) => {
           res.status(HttpStatus.CREATED).json({
             message: 'User created successfully',
-            user
+            user,
           });
         })
-        .catch(err => {
+        .catch((err) => {
           res
             .status(HttpStatus.INTERNAL_SERVER_ERROR)
             .json({ message: 'Error occured', err });
         });
     });
-  }
+  },
 };

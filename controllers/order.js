@@ -15,10 +15,10 @@ module.exports = {
       // check if table busy from another user if not an admin
       const table = await Table.findOne(
         {
-          'tables._id': req.body.tableId
+          'tables._id': req.body.tableId,
         },
         { 'tables.$': 1, _id: 0 }
-      ).then(table => {
+      ).then((table) => {
         return table;
       });
 
@@ -27,7 +27,7 @@ module.exports = {
         if (table.tables[0].user !== req.user.username) {
           return res.status(HttpStatus.UNAUTHORIZED).json({
             message: 'Anauthorized to get table orders',
-            auth: null
+            auth: null,
           });
         }
       }
@@ -35,7 +35,7 @@ module.exports = {
 
       const order = await Order.find({
         userId: req.user._id,
-        tableId: req.body.tableId
+        tableId: req.body.tableId,
       });
       return res.status(HttpStatus.OK).json({ message: 'Order', order });
     } catch (err) {
@@ -58,25 +58,25 @@ module.exports = {
                 type: Joi.string().required(),
                 selected: Joi.alternatives([
                   Joi.string().required(),
-                  Joi.array()
+                  Joi.array(),
                 ]),
-                multiple: Joi.boolean().required()
+                multiple: Joi.boolean().required(),
               })
             )
             .required(),
-          comment: Joi.string().allow('')
+          comment: Joi.string().allow(''),
         })
       ),
       tableId: Joi.string().required(),
       table: Joi.string().required(),
-      time: Joi.string().required()
+      time: Joi.string().required(),
     });
-    const { error, value } = Joi.validate(req.body, schema);
+    const { error, value } = schema.validate(req.body);
     if (error && error.details) {
       return res.status(HttpStatus.BAD_REQUEST).json({ msg: error.details });
     }
 
-    req.body.products.forEach(p => {
+    req.body.products.forEach((p) => {
       p.username = req.user.username;
       p.userId = req.user._id;
       p.tableId = req.body.tableId;
@@ -86,9 +86,9 @@ module.exports = {
     Order.findOne({
       username: req.user.username,
       userId: req.user._id,
-      tableId: req.body.tableId
+      tableId: req.body.tableId,
     })
-      .then(order => {
+      .then((order) => {
         let promises = [];
         promises.push(Order.create(req.body.products));
         if (!order) {
@@ -97,7 +97,7 @@ module.exports = {
             User.updateOne(
               { username: req.user.username, _id: req.user._id },
               {
-                $inc: { ordersToGo: 1 }
+                $inc: { ordersToGo: 1 },
               }
               // { upsert: true, new: true }
             )
@@ -109,8 +109,8 @@ module.exports = {
                 $set: {
                   'tables.$.busy': true,
                   'tables.$.user': req.user.username,
-                  'tables.$.orderTime': new Date()
-                }
+                  'tables.$.orderTime': new Date(),
+                },
               }
             )
           );
@@ -121,11 +121,11 @@ module.exports = {
               .status(HttpStatus.OK)
               .json({ message: 'Order created', order, total, table });
           })
-          .catch(err => {
+          .catch((err) => {
             res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: err });
           });
       })
-      .catch(err => {
+      .catch((err) => {
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: err });
       });
 
@@ -134,7 +134,7 @@ module.exports = {
       table: req.body.table,
       username: req.user.username,
       time: req.body.time,
-      type: 'order'
+      type: 'order',
     });
   },
 
@@ -142,12 +142,10 @@ module.exports = {
     const schema = Joi.object().keys({
       fromtableid: Joi.string().required(),
       totableid: Joi.string().required(),
-      selectedorders: Joi.array()
-        .items(Joi.string().required())
-        .required(),
-      moveall: Joi.boolean().required()
+      selectedorders: Joi.array().items(Joi.string().required()).required(),
+      moveall: Joi.boolean().required(),
     });
-    const { error, value } = Joi.validate(req.body, schema);
+    const { error, value } = schema.validate(req.body);
     if (error && error.details) {
       return res.status(HttpStatus.BAD_REQUEST).json({ msg: error.details });
     }
@@ -157,7 +155,7 @@ module.exports = {
     promises.push(
       Table.findOne(
         {
-          'tables._id': req.body.fromtableid
+          'tables._id': req.body.fromtableid,
         },
         { 'tables.$': 1, _id: 0 }
       )
@@ -165,7 +163,7 @@ module.exports = {
     promises.push(
       Table.findOne(
         {
-          'tables._id': req.body.totableid
+          'tables._id': req.body.totableid,
         },
         { 'tables.$': 1, _id: 0 }
       )
@@ -180,7 +178,7 @@ module.exports = {
           return { fromtable: fromtable.tables[0], totable: totable.tables[0] };
         }
       })
-      .catch(err => {
+      .catch((err) => {
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: err });
       });
 
@@ -203,8 +201,8 @@ module.exports = {
             $set: {
               'tables.$.busy': true,
               'tables.$.user': req.user.username,
-              'tables.$.orderTime': tables.fromtable.orderTime
-            }
+              'tables.$.orderTime': tables.fromtable.orderTime,
+            },
           }
         )
       );
@@ -217,8 +215,8 @@ module.exports = {
             $set: {
               'tables.$.busy': false,
               'tables.$.user': '',
-              'tables.$.orderTime': null
-            }
+              'tables.$.orderTime': null,
+            },
           }
         )
       );
@@ -228,7 +226,7 @@ module.exports = {
         User.updateOne(
           { username: req.user.username, _id: req.user._id },
           {
-            $inc: { ordersToGo: -1 }
+            $inc: { ordersToGo: -1 },
           }
         )
       );
@@ -237,7 +235,7 @@ module.exports = {
         User.updateOne(
           { username: req.user.username, _id: req.user._id },
           {
-            $inc: { ordersToGo: 1 }
+            $inc: { ordersToGo: 1 },
           }
         )
       );
@@ -246,10 +244,10 @@ module.exports = {
     promises.push(
       Order.updateMany(
         {
-          _id: { $in: req.body.selectedorders }
+          _id: { $in: req.body.selectedorders },
         },
         {
-          $set: { tableId: req.body.totableid }
+          $set: { tableId: req.body.totableid },
         }
       )
     );
@@ -258,7 +256,7 @@ module.exports = {
       .then(() => {
         res.status(HttpStatus.OK).json({ message: 'Order moved' });
       })
-      .catch(err => {
+      .catch((err) => {
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: err });
       });
   },
@@ -266,9 +264,9 @@ module.exports = {
   printComment(req, res) {
     const schema = Joi.object().keys({
       comment: Joi.string().required(),
-      time: Joi.string().required()
+      time: Joi.string().required(),
     });
-    const { error, value } = Joi.validate(req.body, schema);
+    const { error, value } = schema.validate(req.body);
     if (error && error.details) {
       return res.status(HttpStatus.BAD_REQUEST).json({ msg: error.details });
     }
@@ -276,8 +274,8 @@ module.exports = {
       comment: req.body.comment,
       username: req.user.username,
       time: req.body.time,
-      type: 'comment'
+      type: 'comment',
     });
-    return res.status(HttpStatus.OK).json({ message: 'Comment printed' });
-  }
+    return res.status(HttpStatus.OK).json({ message: 'Comment received' });
+  },
 };

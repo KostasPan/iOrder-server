@@ -9,19 +9,16 @@ module.exports = {
   async addTable(req, res) {
     const schema = Joi.object().keys({
       positionName: Joi.string().required(),
-      tablesNumber: Joi.number()
-        .integer()
-        .min(1)
-        .required()
+      tablesNumber: Joi.number().integer().min(1).required(),
     });
 
-    const { error, value } = Joi.validate(req.body, schema);
+    const { error, value } = schema.validate(req.body);
     if (error && error.details) {
       return res.status(HttpStatus.BAD_REQUEST).json({ msg: error.details });
     }
 
     const table = await Table.findOne({
-      position_table_name: Helpers.lowerCase(req.body.positionName)
+      position_table_name: Helpers.lowerCase(req.body.positionName),
     });
     if (table) {
       return res
@@ -32,7 +29,7 @@ module.exports = {
     tablesArray = new Array();
     for (let i = 1; i <= req.body.tablesNumber; i++) {
       tablesArray.push({
-        id: i
+        id: i,
         // name: Helpers.lowerCase(req.body.positionName.slice(0, 4)) + i
       });
     }
@@ -41,16 +38,16 @@ module.exports = {
       position_table: Helpers.lowerCase(req.body.positionName.slice(0, 4)),
       position_table_name: Helpers.lowerCase(req.body.positionName),
       length_tables: req.body.tablesNumber,
-      tables: tablesArray
+      tables: tablesArray,
     };
 
     Table.create(body)
-      .then(tablesPosition => {
+      .then((tablesPosition) => {
         res
           .status(HttpStatus.OK)
           .json({ message: 'Table position created', tablesPosition });
       })
-      .catch(err => {
+      .catch((err) => {
         res
           .status(HttpStatus.INTERNAL_SERVER_ERROR)
           .json({ message: 'Error occured' });
@@ -59,9 +56,9 @@ module.exports = {
 
   deletePositionTable(req, res) {
     const schema = Joi.object().keys({
-      positionId: Joi.string().required()
+      positionId: Joi.string().required(),
     });
-    const { error, value } = Joi.validate(req.body, schema);
+    const { error, value } = schema.validate(req.body);
     if (error && error.details) {
       return res.status(HttpStatus.BAD_REQUEST).json({ msg: error.details });
     }
@@ -72,7 +69,7 @@ module.exports = {
         .json({ message: 'You have to be admin to delete a position table.' });
 
     Table.deleteOne({ _id: req.body.positionId })
-      .then(table => {
+      .then((table) => {
         res
           .status(HttpStatus.OK)
           .json({ message: 'Delete position table', table });
@@ -88,9 +85,9 @@ module.exports = {
     const schema = Joi.object().keys({
       tableId: Joi.string().required(),
       position_table: Joi.string().required(),
-      position_table_name: Joi.string().required()
+      position_table_name: Joi.string().required(),
     });
-    const { error, value } = Joi.validate(req.body, schema);
+    const { error, value } = schema.validate(req.body);
     if (error && error.details) {
       return res.status(HttpStatus.BAD_REQUEST).json({ msg: error.details });
     }
@@ -102,7 +99,7 @@ module.exports = {
 
     const table = await Table.findOne({
       position_table_name: Helpers.lowerCase(req.body.position_table_name),
-      position_table: Helpers.lowerCase(req.body.position_table)
+      position_table: Helpers.lowerCase(req.body.position_table),
     });
     if (table) {
       console.log(table);
@@ -113,16 +110,16 @@ module.exports = {
 
     const body = {
       position_table: Helpers.lowerCase(req.body.position_table),
-      position_table_name: Helpers.lowerCase(req.body.position_table_name)
+      position_table_name: Helpers.lowerCase(req.body.position_table_name),
     };
     Table.updateOne({ _id: req.body.tableId }, { $set: body })
-      .then(tables => {
+      .then((tables) => {
         res.status(HttpStatus.CREATED).json({
           message: 'Tables customized successfully',
-          tables
+          tables,
         });
       })
-      .catch(err => {
+      .catch((err) => {
         res
           .status(HttpStatus.INTERNAL_SERVER_ERROR)
           .json({ message: 'Error occured', err });
@@ -138,10 +135,10 @@ module.exports = {
           $group: {
             _id: null,
             total: {
-              $sum: '$ordersToGo'
-            }
-          }
-        }
+              $sum: '$ordersToGo',
+            },
+          },
+        },
       ])
     );
     await Promise.all(promises)
@@ -150,7 +147,7 @@ module.exports = {
           .status(HttpStatus.OK)
           .json({ message: 'Tables', allTables, numOfBusyTables });
       })
-      .catch(err => {
+      .catch((err) => {
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: err });
       });
   },
@@ -162,15 +159,15 @@ module.exports = {
         { $unwind: '$tables' },
         {
           $match: {
-            'tables.busy': true
-          }
+            'tables.busy': true,
+          },
         },
         {
           $sort: {
-            'tables.orderTime': 1
-          }
+            'tables.orderTime': 1,
+          },
         },
-        { $limit: 10 }
+        { $limit: 10 },
       ]);
 
       return res
@@ -181,5 +178,5 @@ module.exports = {
         .status(HttpStatus.INTERNAL_SERVER_ERROR)
         .json({ message: 'Error occured' });
     }
-  }
+  },
 };

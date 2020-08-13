@@ -28,9 +28,9 @@ module.exports = {
 
   initTotal(req, res) {
     const schema = Joi.object().keys({
-      userId: Joi.string().required()
+      userId: Joi.string().required(),
     });
-    const { error, value } = Joi.validate(req.body, schema);
+    const { error, value } = schema.validate(req.body);
     if (error && error.details) {
       return res.status(HttpStatus.BAD_REQUEST).json({ msg: error.details });
     }
@@ -44,10 +44,10 @@ module.exports = {
       { _id: req.body.userId, ordersToGo: 0 },
       { $set: { total: 0 } }
     )
-      .then(total => {
+      .then((total) => {
         res.status(HttpStatus.OK).json({ message: 'Init Total', total });
       })
-      .catch(err => {
+      .catch((err) => {
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: err });
       });
   },
@@ -55,9 +55,9 @@ module.exports = {
   setTotal(req, res) {
     const schema = Joi.object().keys({
       total: Joi.number().required(),
-      tableId: Joi.string().required()
+      tableId: Joi.string().required(),
     });
-    const { error, value } = Joi.validate(req.body, schema);
+    const { error, value } = schema.validate(req.body);
     if (error && error.details) {
       return res.status(HttpStatus.BAD_REQUEST).json({ msg: error.details });
     }
@@ -70,7 +70,7 @@ module.exports = {
       ),
       Order.deleteMany({
         tableId: req.body.tableId,
-        userId: req.user._id
+        userId: req.user._id,
       }),
       Table.updateOne(
         { 'tables._id': req.body.tableId },
@@ -78,32 +78,30 @@ module.exports = {
           $set: {
             'tables.$.busy': false,
             'tables.$.user': '',
-            'tables.$.orderTime': null
-          }
+            'tables.$.orderTime': null,
+          },
         }
-      )
+      ),
     ])
       .then(([total, order, table]) => {
         res.status(HttpStatus.OK).json({
           message: 'Total placed and order removed',
           total,
           order,
-          table
+          table,
         });
       })
-      .catch(err => {
+      .catch((err) => {
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: err });
       });
   },
 
   setPartlyTotal(req, res) {
     const schema = Joi.object().keys({
-      p_ids: Joi.array()
-        .items(Joi.string().required())
-        .required(),
-      total: Joi.number().required()
+      p_ids: Joi.array().items(Joi.string().required()).required(),
+      total: Joi.number().required(),
     });
-    const { error, value } = Joi.validate(req.body, schema);
+    const { error, value } = schema.validate(req.body);
     if (error && error.details) {
       return res.status(HttpStatus.BAD_REQUEST).json({ msg: error.details });
     }
@@ -115,18 +113,18 @@ module.exports = {
       ),
       Order.deleteMany({
         _id: { $in: req.body.p_ids },
-        userId: req.user._id
-      })
+        userId: req.user._id,
+      }),
     ])
       .then(([total, order]) => {
         res.status(HttpStatus.OK).json({
           message: 'Partly total placed and several orders removed',
           total,
-          order
+          order,
         });
       })
-      .catch(err => {
+      .catch((err) => {
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: err });
       });
-  }
+  },
 };

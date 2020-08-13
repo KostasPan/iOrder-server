@@ -45,9 +45,9 @@ module.exports = {
 
   deleteProduct(req, res) {
     const schema = Joi.object().keys({
-      _id: Joi.string().required()
+      _id: Joi.string().required(),
     });
-    const { error, value } = Joi.validate(req.body, schema);
+    const { error, value } = schema.validate(req.body);
     if (error && error.details) {
       return res.status(HttpStatus.BAD_REQUEST).json({ msg: error.details });
     }
@@ -58,7 +58,7 @@ module.exports = {
         .json({ message: 'You have to be admin to delete a product.' });
 
     Product.deleteOne({ _id: req.body._id })
-      .then(product => {
+      .then((product) => {
         res
           .status(HttpStatus.OK)
           .json({ message: 'Successfully deletion of product', product });
@@ -80,7 +80,7 @@ module.exports = {
           Joi.object({
             type: Joi.string().required(),
             choices: Joi.array(),
-            multiple: Joi.boolean().required()
+            multiple: Joi.boolean().required(),
           })
         )
         .required(),
@@ -89,12 +89,12 @@ module.exports = {
           Joi.object({
             type: Joi.string().required(),
             choices: Joi.array(),
-            multiple: Joi.boolean().required()
+            multiple: Joi.boolean().required(),
           })
         )
-        .required()
+        .required(),
     });
-    const { error, value } = Joi.validate(req.body, schema);
+    const { error, value } = schema.validate(req.body);
     if (error && error.details) {
       return res.status(HttpStatus.BAD_REQUEST).json({ msg: error.details });
     }
@@ -105,7 +105,7 @@ module.exports = {
         .json({ message: 'You have to be admin to add products.' });
 
     const prod = await Product.findOne({
-      name: req.body.name
+      name: req.body.name,
     });
     if (prod) {
       return res
@@ -118,16 +118,16 @@ module.exports = {
       category: req.body.category,
       price: req.body.price,
       details: req.body.details,
-      detailsoptional: req.body.detailsoptional
+      detailsoptional: req.body.detailsoptional,
     };
 
     Product.create(body)
-      .then(product => {
+      .then((product) => {
         res
           .status(HttpStatus.OK)
           .json({ message: 'Product added successfully', product });
       })
-      .catch(err => {
+      .catch((err) => {
         res
           .status(HttpStatus.INTERNAL_SERVER_ERROR)
           .json({ message: 'Error occured' });
@@ -145,7 +145,7 @@ module.exports = {
           Joi.object({
             type: Joi.string().required(),
             choices: Joi.array(),
-            multiple: Joi.boolean().required()
+            multiple: Joi.boolean().required(),
           })
         )
         .required(),
@@ -154,12 +154,12 @@ module.exports = {
           Joi.object({
             type: Joi.string().required(),
             choices: Joi.array(),
-            multiple: Joi.boolean().required()
+            multiple: Joi.boolean().required(),
           })
         )
-        .required()
+        .required(),
     });
-    const { error, value } = Joi.validate(req.body, schema);
+    const { error, value } = schema.validate(req.body);
     if (error && error.details) {
       return res.status(HttpStatus.BAD_REQUEST).json({ msg: error.details });
     }
@@ -174,19 +174,19 @@ module.exports = {
       category: req.body.category,
       price: req.body.price,
       details: req.body.details,
-      detailsoptional: req.body.detailsoptional
+      detailsoptional: req.body.detailsoptional,
     };
     Product.updateOne({ _id: req.body._id }, { $set: body })
-      .then(product => {
+      .then((product) => {
         res.status(HttpStatus.CREATED).json({
           message: 'Product customized successfully',
-          product
+          product,
         });
       })
-      .catch(err => {
+      .catch((err) => {
         res
           .status(HttpStatus.INTERNAL_SERVER_ERROR)
           .json({ message: 'Error occured', err });
       });
-  }
+  },
 };

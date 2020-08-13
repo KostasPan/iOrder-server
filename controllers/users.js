@@ -15,7 +15,7 @@ module.exports = {
 
       const users = await User.find({}, { password: 0 }).sort({
         total: 1,
-        ordersToGo: 1
+        ordersToGo: 1,
       });
       return res.status(HttpStatus.OK).json({ message: 'Users', users });
     } catch (err) {
@@ -27,9 +27,9 @@ module.exports = {
 
   deleteUser(req, res) {
     const schema = Joi.object().keys({
-      userId: Joi.string().required()
+      userId: Joi.string().required(),
     });
-    const { error, value } = Joi.validate(req.body, schema);
+    const { error, value } = schema.validate(req.body);
     if (error && error.details) {
       return res.status(HttpStatus.BAD_REQUEST).json({ msg: error.details });
     }
@@ -40,7 +40,7 @@ module.exports = {
         .json({ message: 'You have to be admin to delete a user.' });
 
     User.deleteOne({ _id: req.body.userId })
-      .then(user => {
+      .then((user) => {
         res.status(HttpStatus.OK).json({ message: 'User deletion', user });
       })
       .catch(() => {
@@ -55,9 +55,9 @@ module.exports = {
       userId: Joi.string().required(),
       username: Joi.string().required(),
       password: Joi.string().required(),
-      admin: Joi.boolean().required()
+      admin: Joi.boolean().required(),
     });
-    const { error, value } = Joi.validate(req.body, schema);
+    const { error, value } = schema.validate(req.body);
     if (error && error.details) {
       return res.status(HttpStatus.BAD_REQUEST).json({ msg: error.details });
     }
@@ -77,20 +77,20 @@ module.exports = {
       const body = {
         username: Helpers.lowerCase(value.username),
         password: hash,
-        admin: value.admin
+        admin: value.admin,
       };
       User.updateOne({ _id: req.body.userId }, { $set: body })
-        .then(user => {
+        .then((user) => {
           res.status(HttpStatus.CREATED).json({
             message: 'User customized successfully',
-            user
+            user,
           });
         })
-        .catch(err => {
+        .catch((err) => {
           res
             .status(HttpStatus.INTERNAL_SERVER_ERROR)
             .json({ message: 'Error occured', err });
         });
     });
-  }
+  },
 };

@@ -56,10 +56,12 @@ module.exports = {
             .items(
               Joi.object({
                 type: Joi.string().required(),
-                selected: Joi.alternatives([
+                // problematic
+                selected: Joi.alternatives().try(
                   Joi.string().required(),
-                  Joi.array(),
-                ]),
+                  Joi.array().items(Joi.string())
+                ),
+                // selected: Joi.array().items(Joi.string()),
                 multiple: Joi.boolean().required(),
               })
             )

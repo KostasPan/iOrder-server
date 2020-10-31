@@ -11,13 +11,13 @@ const orderSchema = mongoose.Schema([
     choices: [
       {
         type: { type: String, default: '' },
-        selected: { type: String, default: '' },
-        multiple: { type: Boolean, default: false }
-      }
+        selected: mongoose.Mixed,
+        multiple: { type: Boolean, default: false },
+      },
     ],
     comment: { type: String, default: '' },
-    createdAt: { type: Date, default: Date.now() }
-  }
+    createdAt: { type: Date, default: Date.now() },
+  },
 ]);
 
 module.exports = mongoose.model('Order', orderSchema);

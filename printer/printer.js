@@ -46,7 +46,7 @@ async.forever(
         }
       }
       next();
-    }, 5000);
+    }, 1500);
   },
   function (err) {
     console.error(err);
